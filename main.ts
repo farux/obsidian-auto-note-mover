@@ -9,49 +9,49 @@ export default class AutoNoteMover extends Plugin {
 		await this.loadSettings();
 		const folderTagPattern = this.settings.folder_tag_pattern;
 
-		const fileCheck = debounce(
-			(file: TFile) => {
-				if (!this.settings.enable_auto_note_mover) {
-					return;
-				}
-				const fileCache = this.app.metadataCache.getFileCache(file);
-				// Disable AutoNoteMover when "AutoNoteMover: disable" is present in the frontmatter.
-				if (isFmDisable(fileCache)) {
-					return;
-				}
-				const fileName = file.basename;
-				const fileFullName = file.basename + '.' + file.extension;
-				const settingsLength = folderTagPattern.length;
-				const cacheTag = getAllTags(fileCache);
-				// checker
-				for (let i = 0; i < settingsLength; i++) {
-					const settingFolder = folderTagPattern[i].folder;
-					const settingTag = folderTagPattern[i].tag;
-					const settingPattern = folderTagPattern[i].pattern;
-					// Tag check
-					if (!settingPattern) {
-						if (cacheTag.find((e) => e === settingTag)) {
-							fileMove(this.app, settingFolder, fileFullName, file);
-							break;
-						}
-						// Title check
-					} else if (!settingTag) {
-						const regex = new RegExp(settingPattern);
-						const isMatch = regex.test(fileName);
-						if (isMatch) {
-							fileMove(this.app, settingFolder, fileFullName, file);
-							break;
-						}
+		const fileCheck = (file: TFile) => {
+			if (!this.settings.enable_auto_note_mover) {
+				return;
+			}
+			const fileCache = this.app.metadataCache.getFileCache(file);
+			// Disable AutoNoteMover when "AutoNoteMover: disable" is present in the frontmatter.
+			if (isFmDisable(fileCache)) {
+				return;
+			}
+			const fileName = file.basename;
+			const fileFullName = file.basename + '.' + file.extension;
+			const settingsLength = folderTagPattern.length;
+			const cacheTag = getAllTags(fileCache);
+			// checker
+			for (let i = 0; i < settingsLength; i++) {
+				const settingFolder = folderTagPattern[i].folder;
+				const settingTag = folderTagPattern[i].tag;
+				const settingPattern = folderTagPattern[i].pattern;
+				// Tag check
+				if (!settingPattern) {
+					if (cacheTag.find((e) => e === settingTag)) {
+						fileMove(this.app, settingFolder, fileFullName, file);
+						break;
+					}
+					// Title check
+				} else if (!settingTag) {
+					const regex = new RegExp(settingPattern);
+					const isMatch = regex.test(fileName);
+					if (isMatch) {
+						fileMove(this.app, settingFolder, fileFullName, file);
+						break;
 					}
 				}
-			},
-			1000,
-			true
-		);
+			}
+		};
 
 		const registerCheck = (file: TFile) => {
 			if (this.settings.trigger_auto_manual === 'Automatic') {
-				fileCheck(file);
+				const fileSet: Set<TFile> = new Set();
+				fileSet.add(file);
+				for (let item of fileSet) {
+					fileCheck(item);
+				}
 			}
 		};
 
