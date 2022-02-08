@@ -1,9 +1,26 @@
-import { App, CachedMetadata, normalizePath, Notice, parseFrontMatterEntry, TFile } from 'obsidian';
+import { App, CachedMetadata, normalizePath, Notice, parseFrontMatterEntry, TFile, TFolder } from 'obsidian';
 
 // Disable AutoNoteMover when "AutoNoteMover: disable" is present in the frontmatter.
-export const isFmDisable = async (fileCache: CachedMetadata) => {
-	const fm = await parseFrontMatterEntry(fileCache.frontmatter, 'AutoNoteMover');
+export const isFmDisable = (fileCache: CachedMetadata) => {
+	const fm = parseFrontMatterEntry(fileCache.frontmatter, 'AutoNoteMover');
 	if (fm === 'disable') {
+		return true;
+	} else {
+		return false;
+	}
+};
+
+const folderOrFile = (app: App, path: string) => {
+	const F = app.vault.getAbstractFileByPath(path);
+	if (F instanceof TFile) {
+		return TFile;
+	} else if (F instanceof TFolder) {
+		return TFolder;
+	}
+};
+
+const isTFExists = (app: App, path: string, F: typeof TFile | typeof TFolder) => {
+	if (folderOrFile(app, normalizePath(path)) === F) {
 		return true;
 	} else {
 		return false;
@@ -12,16 +29,14 @@ export const isFmDisable = async (fileCache: CachedMetadata) => {
 
 export const fileMove = async (app: App, settingFolder: string, fileFullName: string, file: TFile) => {
 	// Does the destination folder exist?
-	const isFolderExists = await app.vault.adapter.exists(normalizePath(settingFolder));
-	if (!isFolderExists) {
+	if (!isTFExists(app, settingFolder, TFolder)) {
 		console.error(`[Auto Note Mover] The destination folder "${settingFolder}" does not exist.`);
 		new Notice(`[Auto Note Mover]\n"Error: The destination folder\n"${settingFolder}"\ndoes not exist.`);
 		return;
 	}
 	// Does the file with the same name exist in the destination folder?
 	const newPath = normalizePath(settingFolder + '/' + fileFullName);
-	const isFileExists = await app.vault.adapter.exists(normalizePath(newPath));
-	if (isFileExists && newPath !== file.path) {
+	if (isTFExists(app, newPath, TFile) && newPath !== file.path) {
 		console.error(
 			`[Auto Note Mover] Error: A file with the same name "${fileFullName}" exists at the destination folder.`
 		);

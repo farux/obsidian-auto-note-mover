@@ -4,53 +4,42 @@ import { fileMove, isFmDisable } from 'utils/Utils';
 
 export default class AutoNoteMover extends Plugin {
 	settings: AutoNoteMoverSettings;
-	folderTagPattern: FolderTagPattern[];
-	fileName: string;
-	fileFullName: string;
-	fileCache: CachedMetadata;
-	settingsLength: number;
-	cacheTag: string[];
-	settingFolder: string;
-	settingTag: string;
-	settingPattern: string;
-	regex: RegExp;
-	isMatch: boolean;
 
 	async onload() {
 		await this.loadSettings();
-		this.folderTagPattern = this.settings.folder_tag_pattern;
+		const folderTagPattern = this.settings.folder_tag_pattern;
 
 		const fileCheck = debounce(
-			async (file: TFile) => {
+			(file: TFile) => {
 				if (!this.settings.enable_auto_note_mover) {
 					return;
 				}
-				this.fileCache = this.app.metadataCache.getFileCache(file);
+				const fileCache = this.app.metadataCache.getFileCache(file);
 				// Disable AutoNoteMover when "AutoNoteMover: disable" is present in the frontmatter.
-				if (await isFmDisable(this.fileCache)) {
+				if (isFmDisable(fileCache)) {
 					return;
 				}
-				this.fileName = file.basename;
-				this.fileFullName = file.basename + '.' + file.extension;
-				this.settingsLength = this.folderTagPattern.length;
-				this.cacheTag = getAllTags(this.fileCache);
+				const fileName = file.basename;
+				const fileFullName = file.basename + '.' + file.extension;
+				const settingsLength = folderTagPattern.length;
+				const cacheTag = getAllTags(fileCache);
 				// checker
-				for (let i = 0; i < this.settingsLength; i++) {
-					this.settingFolder = this.folderTagPattern[i].folder;
-					this.settingTag = this.folderTagPattern[i].tag;
-					this.settingPattern = this.folderTagPattern[i].pattern;
+				for (let i = 0; i < settingsLength; i++) {
+					const settingFolder = folderTagPattern[i].folder;
+					const settingTag = folderTagPattern[i].tag;
+					const settingPattern = folderTagPattern[i].pattern;
 					// Tag check
-					if (!this.settingPattern) {
-						if (this.cacheTag.find((e) => e === this.settingTag)) {
-							fileMove(this.app, this.settingFolder, this.fileFullName, file);
+					if (!settingPattern) {
+						if (cacheTag.find((e) => e === settingTag)) {
+							fileMove(this.app, settingFolder, fileFullName, file);
 							break;
 						}
 						// Title check
-					} else if (!this.settingTag) {
-						this.regex = new RegExp(this.settingPattern);
-						this.isMatch = this.regex.test(this.fileName);
-						if (this.isMatch) {
-							fileMove(this.app, this.settingFolder, this.fileFullName, file);
+					} else if (!settingTag) {
+						const regex = new RegExp(settingPattern);
+						const isMatch = regex.test(fileName);
+						if (isMatch) {
+							fileMove(this.app, settingFolder, fileFullName, file);
 							break;
 						}
 					}
@@ -87,7 +76,7 @@ export default class AutoNoteMover extends Plugin {
 				new Notice('Auto Note Mover is disabled in the settings.');
 				return;
 			}
-			if (await isFmDisable(this.app.metadataCache.getFileCache(view.file))) {
+			if (isFmDisable(this.app.metadataCache.getFileCache(view.file))) {
 				new Notice('Auto Note Mover is disabled in the frontmatter.');
 				return;
 			}
@@ -104,6 +93,22 @@ export default class AutoNoteMover extends Plugin {
 						moveNoteCommand(markdownView);
 					}
 					return true;
+				}
+			},
+		});
+
+		this.addCommand({
+			id: 'toggle-Auto-Manual',
+			name: 'Toggle Auto-Manual',
+			callback: () => {
+				if (this.settings.trigger_auto_manual === 'Automatic') {
+					this.settings.trigger_auto_manual = 'Manual';
+					this.saveData(this.settings);
+					new Notice('[Auto Note Mover]\nTrigger is Manual.');
+				} else if (this.settings.trigger_auto_manual === 'Manual') {
+					this.settings.trigger_auto_manual = 'Automatic';
+					this.saveData(this.settings);
+					new Notice('[Auto Note Mover]\nTrigger is Automatic.');
 				}
 			},
 		});
