@@ -1,5 +1,5 @@
-import { MarkdownView, Plugin, TFile, getAllTags, debounce, CachedMetadata, Notice } from 'obsidian';
-import { DEFAULT_SETTINGS, AutoNoteMoverSettings, AutoNoteMoverSettingTab, FolderTagPattern } from 'settings/settings';
+import { MarkdownView, Plugin, TFile, getAllTags, Notice } from 'obsidian';
+import { DEFAULT_SETTINGS, AutoNoteMoverSettings, AutoNoteMoverSettingTab } from 'settings/settings';
 import { fileMove, isFmDisable } from 'utils/Utils';
 
 export default class AutoNoteMover extends Plugin {
@@ -9,8 +9,14 @@ export default class AutoNoteMover extends Plugin {
 		await this.loadSettings();
 		const folderTagPattern = this.settings.folder_tag_pattern;
 
-		const fileCheck = (file: TFile) => {
+		const fileCheck = (file: TFile, oldPath?: string) => {
 			if (!this.settings.enable_auto_note_mover) {
+				return;
+			}
+			const fileName = file.basename;
+			const fileFullName = file.basename + '.' + file.extension;
+			// The rename event with no basename change will be terminated.
+			if (oldPath && oldPath.split('/').pop() === fileFullName) {
 				return;
 			}
 			const fileCache = this.app.metadataCache.getFileCache(file);
@@ -18,8 +24,6 @@ export default class AutoNoteMover extends Plugin {
 			if (isFmDisable(fileCache)) {
 				return;
 			}
-			const fileName = file.basename;
-			const fileFullName = file.basename + '.' + file.extension;
 			const settingsLength = folderTagPattern.length;
 			const cacheTag = getAllTags(fileCache);
 			// checker
@@ -29,7 +33,7 @@ export default class AutoNoteMover extends Plugin {
 				const settingPattern = folderTagPattern[i].pattern;
 				// Tag check
 				if (!settingPattern) {
-					if (cacheTag.find((e) => e === settingTag)) {
+					if (cacheTag && cacheTag.find((e) => e === settingTag)) {
 						fileMove(this.app, settingFolder, fileFullName, file);
 						break;
 					}
@@ -44,13 +48,12 @@ export default class AutoNoteMover extends Plugin {
 				}
 			}
 		};
-
-		const registerCheck = (file: TFile) => {
+		const fileSet: Set<TFile> = new Set();
+		const registerCheck = (file: TFile, oldPath?: string) => {
 			if (this.settings.trigger_auto_manual === 'Automatic') {
-				const fileSet: Set<TFile> = new Set();
 				fileSet.add(file);
 				for (let item of fileSet) {
-					fileCheck(item);
+					fileCheck(item, oldPath);
 				}
 			}
 		};
@@ -66,8 +69,17 @@ export default class AutoNoteMover extends Plugin {
 			})
 		);
 		this.registerEvent(
-			this.app.vault.on('rename', (file: TFile) => {
-				registerCheck(file);
+			this.app.vault.on('rename', (file: TFile, oldPath: string) => {
+				registerCheck(file, oldPath);
+			})
+		);
+		// for tag wrangler plugin
+		this.registerEvent(
+			this.app.vault.on('modify', async (file: TFile) => {
+				// Avoid overlap with app.metadataCache.on('changed' ...is this OK?
+				window.setTimeout(function () {
+					registerCheck(file);
+				}, 1000);
 			})
 		);
 
@@ -98,7 +110,7 @@ export default class AutoNoteMover extends Plugin {
 		});
 
 		this.addCommand({
-			id: 'toggle-Auto-Manual',
+			id: 'Toggle-Auto-Manual',
 			name: 'Toggle Auto-Manual',
 			callback: () => {
 				if (this.settings.trigger_auto_manual === 'Automatic') {

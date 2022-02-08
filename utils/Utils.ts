@@ -2,6 +2,9 @@ import { App, CachedMetadata, normalizePath, Notice, parseFrontMatterEntry, TFil
 
 // Disable AutoNoteMover when "AutoNoteMover: disable" is present in the frontmatter.
 export const isFmDisable = (fileCache: CachedMetadata) => {
+	if (!fileCache) {
+		return;
+	}
 	const fm = parseFrontMatterEntry(fileCache.frontmatter, 'AutoNoteMover');
 	if (fm === 'disable') {
 		return true;
