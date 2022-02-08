@@ -82,3 +82,7 @@ Title: Tested by JavaScript regular expressions.
 ![fm0](https://user-images.githubusercontent.com/33874906/152722074-d550e13c-2955-40ab-b324-7e934d86ea1a.png)
 
 
+## Attribution
+suggest.ts and file-suggest.ts are copyrighted works of Liam Cain (https://github.com/liamcain) obsidian-periodic-notes (https://github.com/liamcain/obsidian-periodic-notes).
+
+popper.js https://popper.js.org/
