@@ -9,21 +9,30 @@ export default class AutoNoteMover extends Plugin {
 		await this.loadSettings();
 		const folderTagPattern = this.settings.folder_tag_pattern;
 
-		const fileCheck = (file: TFile, oldPath?: string) => {
+		const fileCheck = (file: TFile, oldPath?: string, caller?: string) => {
 			if (!this.settings.enable_auto_note_mover) {
 				return;
 			}
-			const fileName = file.basename;
-			const fileFullName = file.basename + '.' + file.extension;
-			// The rename event with no basename change will be terminated.
-			if (oldPath && oldPath.split('/').pop() === fileFullName) {
+			if (this.settings.trigger_auto_manual !== 'Automatic' && caller !== 'cmd') {
 				return;
 			}
+
+			const fileSet: Set<TFile> = new Set();
+			fileSet.add(file);
+			for (let item of fileSet) {
+				// The rename event with no basename change will be terminated.
+				if (oldPath && oldPath.split('/').pop() === item.basename + '.' + item.extension) {
+					return;
+				}
+			}
+
 			const fileCache = this.app.metadataCache.getFileCache(file);
 			// Disable AutoNoteMover when "AutoNoteMover: disable" is present in the frontmatter.
 			if (isFmDisable(fileCache)) {
 				return;
 			}
+			const fileName = file.basename;
+			const fileFullName = file.basename + '.' + file.extension;
 			const settingsLength = folderTagPattern.length;
 			const cacheTag = getAllTags(fileCache);
 			// checker
@@ -48,40 +57,10 @@ export default class AutoNoteMover extends Plugin {
 				}
 			}
 		};
-		const fileSet: Set<TFile> = new Set();
-		const registerCheck = (file: TFile, oldPath?: string) => {
-			if (this.settings.trigger_auto_manual === 'Automatic') {
-				fileSet.add(file);
-				for (let item of fileSet) {
-					fileCheck(item, oldPath);
-				}
-			}
-		};
 
-		this.registerEvent(
-			this.app.vault.on('create', (file: TFile) => {
-				registerCheck(file);
-			})
-		);
-		this.registerEvent(
-			this.app.metadataCache.on('changed', (file: TFile) => {
-				registerCheck(file);
-			})
-		);
-		this.registerEvent(
-			this.app.vault.on('rename', (file: TFile, oldPath: string) => {
-				registerCheck(file, oldPath);
-			})
-		);
-		// for tag wrangler plugin
-		this.registerEvent(
-			this.app.vault.on('modify', async (file: TFile) => {
-				// Avoid overlap with app.metadataCache.on('changed' ...is this OK?
-				window.setTimeout(function () {
-					registerCheck(file);
-				}, 1000);
-			})
-		);
+		this.registerEvent(this.app.vault.on('create', fileCheck));
+		this.registerEvent(this.app.metadataCache.on('changed', fileCheck));
+		this.registerEvent(this.app.vault.on('rename', fileCheck));
 
 		const moveNoteCommand = async (view: MarkdownView) => {
 			if (!this.settings.enable_auto_note_mover) {
@@ -92,7 +71,7 @@ export default class AutoNoteMover extends Plugin {
 				new Notice('Auto Note Mover is disabled in the frontmatter.');
 				return;
 			}
-			fileCheck(view.file);
+			fileCheck(view.file, undefined, 'cmd');
 		};
 
 		this.addCommand({
