@@ -86,3 +86,7 @@ Title: Tested by JavaScript regular expressions.
 suggest.ts and file-suggest.ts are copyrighted works of Liam Cain (https://github.com/liamcain) obsidian-periodic-notes (https://github.com/liamcain/obsidian-periodic-notes).
 
 popper.js https://popper.js.org/
+
+
+## Special Thanks
+Thanks to [@pjeby](https://github.com/pjeby) for his help in creating this plugin.
