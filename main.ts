@@ -1,4 +1,4 @@
-import { MarkdownView, Plugin, TFile, getAllTags, Notice } from 'obsidian';
+import { MarkdownView, Plugin, TFile, getAllTags, Notice, TAbstractFile } from 'obsidian';
 import { DEFAULT_SETTINGS, AutoNoteMoverSettings, AutoNoteMoverSettingTab } from 'settings/settings';
 import { fileMove, isFmDisable } from 'utils/Utils';
 
@@ -9,10 +9,11 @@ export default class AutoNoteMover extends Plugin {
 		await this.loadSettings();
 		const folderTagPattern = this.settings.folder_tag_pattern;
 
-		const fileCheck = (file: TFile, oldPath?: string, caller?: string) => {
+		const fileCheck = (file: TAbstractFile, oldPath?: string, caller?: string) => {
 			if (this.settings.trigger_auto_manual !== 'Automatic' && caller !== 'cmd') {
 				return;
 			}
+			if (!(file instanceof TFile)) return;
 
 			const fileSet: Set<TFile> = new Set();
 			fileSet.add(file);
@@ -64,9 +65,9 @@ export default class AutoNoteMover extends Plugin {
 		setIndicator(); */
 
 		this.app.workspace.onLayoutReady(() => {
-			this.registerEvent(this.app.vault.on('create', fileCheck));
-			this.registerEvent(this.app.metadataCache.on('changed', fileCheck));
-			this.registerEvent(this.app.vault.on('rename', fileCheck));
+			this.registerEvent(this.app.vault.on('create', (file) => fileCheck(file)));
+			this.registerEvent(this.app.metadataCache.on('changed', (file) => fileCheck(file)));
+			this.registerEvent(this.app.vault.on('rename', (file, oldPath) => fileCheck(file, oldPath)));
 		});
 
 		const moveNoteCommand = (view: MarkdownView) => {
