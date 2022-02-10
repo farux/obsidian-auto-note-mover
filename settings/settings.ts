@@ -13,13 +13,13 @@ export interface FolderTagPattern {
 
 export interface AutoNoteMoverSettings {
 	trigger_auto_manual: string;
-	enable_auto_note_mover: boolean;
+	statusBar_trigger_indicator: boolean;
 	folder_tag_pattern: Array<FolderTagPattern>;
 }
 
 export const DEFAULT_SETTINGS: AutoNoteMoverSettings = {
 	trigger_auto_manual: 'Automatic',
-	enable_auto_note_mover: true,
+	statusBar_trigger_indicator: true,
 	folder_tag_pattern: [{ folder: '', tag: '', pattern: '' }],
 };
 
@@ -48,7 +48,7 @@ export class AutoNoteMoverSettingTab extends PluginSettingTab {
 			'Auto Note Mover will automatically move the active notes to their respective folders according to the rules.'
 		);
 
-		new Setting(this.containerEl)
+		/* new Setting(this.containerEl)
 			.setName('Auto Note Mover')
 			.setDesc('Enable or disable the Auto Note Mover.')
 			.addToggle((toggle) => {
@@ -63,7 +63,7 @@ export class AutoNoteMoverSettingTab extends PluginSettingTab {
 
 		if (!this.plugin.settings.enable_auto_note_mover) {
 			return;
-		}
+		} */
 
 		const triggerDesc = document.createDocumentFragment();
 		triggerDesc.append(
@@ -93,6 +93,17 @@ export class AutoNoteMoverSettingTab extends PluginSettingTab {
 						this.display();
 					})
 			);
+
+		/* new Setting(this.containerEl)
+			.setName('Status Bar Trigger Indicator')
+			.setDesc('The status bar will display [A] if the trigger is Automatic, and [M] for Manual. ')
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.statusBar_trigger_indicator).onChange(async (value) => {
+					this.plugin.settings.statusBar_trigger_indicator = value;
+					await this.plugin.saveSettings();
+					this.display();
+				});
+			}); */
 
 		const ruleDesc = document.createDocumentFragment();
 		ruleDesc.append(

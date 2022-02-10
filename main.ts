@@ -10,9 +10,6 @@ export default class AutoNoteMover extends Plugin {
 		const folderTagPattern = this.settings.folder_tag_pattern;
 
 		const fileCheck = (file: TFile, oldPath?: string, caller?: string) => {
-			if (!this.settings.enable_auto_note_mover) {
-				return;
-			}
 			if (this.settings.trigger_auto_manual !== 'Automatic' && caller !== 'cmd') {
 				return;
 			}
@@ -42,7 +39,7 @@ export default class AutoNoteMover extends Plugin {
 				const settingPattern = folderTagPattern[i].pattern;
 				// Tag check
 				if (!settingPattern) {
-					if (cacheTag && cacheTag.find((e) => e === settingTag)) {
+					if (cacheTag.find((e) => e === settingTag)) {
 						fileMove(this.app, settingFolder, fileFullName, file);
 						break;
 					}
@@ -58,15 +55,21 @@ export default class AutoNoteMover extends Plugin {
 			}
 		};
 
-		this.registerEvent(this.app.vault.on('create', fileCheck));
-		this.registerEvent(this.app.metadataCache.on('changed', fileCheck));
-		this.registerEvent(this.app.vault.on('rename', fileCheck));
+		/* How to get the Setting change event?
+		Show trigger indicator on status bar
+		const triggerIndicator = this.addStatusBarItem();
+		const setIndicator = () => {
+			triggerIndicator.setText(getTriggerIndicator(this.settings.trigger_auto_manual));
+		};
+		setIndicator(); */
 
-		const moveNoteCommand = async (view: MarkdownView) => {
-			if (!this.settings.enable_auto_note_mover) {
-				new Notice('Auto Note Mover is disabled in the settings.');
-				return;
-			}
+		this.app.workspace.onLayoutReady(() => {
+			this.registerEvent(this.app.vault.on('create', fileCheck));
+			this.registerEvent(this.app.metadataCache.on('changed', fileCheck));
+			this.registerEvent(this.app.vault.on('rename', fileCheck));
+		});
+
+		const moveNoteCommand = (view: MarkdownView) => {
 			if (isFmDisable(this.app.metadataCache.getFileCache(view.file))) {
 				new Notice('Auto Note Mover is disabled in the frontmatter.');
 				return;

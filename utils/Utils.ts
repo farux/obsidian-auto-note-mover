@@ -2,9 +2,6 @@ import { App, CachedMetadata, normalizePath, Notice, parseFrontMatterEntry, TFil
 
 // Disable AutoNoteMover when "AutoNoteMover: disable" is present in the frontmatter.
 export const isFmDisable = (fileCache: CachedMetadata) => {
-	if (!fileCache) {
-		return;
-	}
 	const fm = parseFrontMatterEntry(fileCache.frontmatter, 'AutoNoteMover');
 	if (fm === 'disable') {
 		return true;
@@ -66,3 +63,11 @@ export const arrayMove = <T>(array: T[], fromIndex: number, toIndex: number): vo
 	array[fromIndex] = array[toIndex];
 	array[toIndex] = temp;
 };
+
+/* export const getTriggerIndicator = (trigger: string) => {
+	if (trigger === 'Automatic') {
+		return `[A]`;
+	} else {
+		return `[M]`;
+	}
+}; */
