@@ -1,6 +1,6 @@
-import { MarkdownView, Plugin, TFile, getAllTags, Notice, TAbstractFile } from 'obsidian';
+import { MarkdownView, Plugin, TFile, getAllTags, Notice, TAbstractFile, normalizePath } from 'obsidian';
 import { DEFAULT_SETTINGS, AutoNoteMoverSettings, AutoNoteMoverSettingTab } from 'settings/settings';
-import { fileMove, isFmDisable } from 'utils/Utils';
+import { fileMove, getTriggerIndicator, isFmDisable } from 'utils/Utils';
 
 export default class AutoNoteMover extends Plugin {
 	settings: AutoNoteMoverSettings;
@@ -8,7 +8,7 @@ export default class AutoNoteMover extends Plugin {
 	async onload() {
 		await this.loadSettings();
 		const folderTagPattern = this.settings.folder_tag_pattern;
-
+		const excludedFolder = this.settings.excluded_folder;
 		const fileCheck = (file: TAbstractFile, oldPath?: string, caller?: string) => {
 			if (this.settings.trigger_auto_manual !== 'Automatic' && caller !== 'cmd') {
 				return;
@@ -20,11 +20,20 @@ export default class AutoNoteMover extends Plugin {
 				return;
 			}
 
+			// Excluded Folder check
+			const excludedFolderLength = excludedFolder.length;
+			for (let i = 0; i < excludedFolderLength; i++) {
+				if (file.parent.path === normalizePath(excludedFolder[i].folder)) {
+					return;
+				}
+			}
+
 			const fileCache = this.app.metadataCache.getFileCache(file);
 			// Disable AutoNoteMover when "AutoNoteMover: disable" is present in the frontmatter.
 			if (isFmDisable(fileCache)) {
 				return;
 			}
+
 			const fileName = file.basename;
 			const fileFullName = file.basename + '.' + file.extension;
 			const settingsLength = folderTagPattern.length;
@@ -52,20 +61,23 @@ export default class AutoNoteMover extends Plugin {
 			}
 		};
 
-		/* How to get the Setting change event?
-		Show trigger indicator on status bar
-		const triggerIndicator = this.addStatusBarItem();
+		// Show trigger indicator on status bar
+		let triggerIndicator: HTMLElement;
 		const setIndicator = () => {
+			if (!this.settings.statusBar_trigger_indicator) return;
 			triggerIndicator.setText(getTriggerIndicator(this.settings.trigger_auto_manual));
 		};
-		setIndicator(); */
+		if (this.settings.statusBar_trigger_indicator) {
+			triggerIndicator = this.addStatusBarItem();
+			setIndicator();
+			// TODO: Is there a better way?
+			this.registerDomEvent(window, 'change', setIndicator);
+		}
 
 		this.app.workspace.onLayoutReady(() => {
 			this.registerEvent(this.app.vault.on('create', (file) => fileCheck(file)));
 			this.registerEvent(this.app.metadataCache.on('changed', (file) => fileCheck(file)));
 			this.registerEvent(this.app.vault.on('rename', (file, oldPath) => fileCheck(file, oldPath)));
-			// SettingTab dropdown change detection for status bar indicator... There may be another way.
-			// this.registerDomEvent(window, 'change', setIndicator);
 		});
 
 		const moveNoteCommand = (view: MarkdownView) => {
@@ -103,6 +115,7 @@ export default class AutoNoteMover extends Plugin {
 					this.saveData(this.settings);
 					new Notice('[Auto Note Mover]\nTrigger is Automatic.');
 				}
+				setIndicator();
 			},
 		});
 

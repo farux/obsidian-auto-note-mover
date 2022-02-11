@@ -11,16 +11,22 @@ export interface FolderTagPattern {
 	pattern: string;
 }
 
+export interface ExcludedFolder {
+	folder: string;
+}
+
 export interface AutoNoteMoverSettings {
 	trigger_auto_manual: string;
 	statusBar_trigger_indicator: boolean;
 	folder_tag_pattern: Array<FolderTagPattern>;
+	excluded_folder: Array<ExcludedFolder>;
 }
 
 export const DEFAULT_SETTINGS: AutoNoteMoverSettings = {
 	trigger_auto_manual: 'Automatic',
 	statusBar_trigger_indicator: true,
 	folder_tag_pattern: [{ folder: '', tag: '', pattern: '' }],
+	excluded_folder: [{ folder: '' }],
 };
 
 export class AutoNoteMoverSettingTab extends PluginSettingTab {
@@ -93,17 +99,6 @@ export class AutoNoteMoverSettingTab extends PluginSettingTab {
 						this.display();
 					})
 			);
-
-		/* new Setting(this.containerEl)
-			.setName('Status Bar Trigger Indicator')
-			.setDesc('The status bar will display [A] if the trigger is Automatic, and [M] for Manual. ')
-			.addToggle((toggle) => {
-				toggle.setValue(this.plugin.settings.statusBar_trigger_indicator).onChange(async (value) => {
-					this.plugin.settings.statusBar_trigger_indicator = value;
-					await this.plugin.saveSettings();
-					this.display();
-				});
-			}); */
 
 		const ruleDesc = document.createDocumentFragment();
 		ruleDesc.append(
@@ -235,5 +230,90 @@ export class AutoNoteMoverSettingTab extends PluginSettingTab {
 				});
 			s.infoEl.remove();
 		});
+
+		const excludedFolderDesc = document.createDocumentFragment();
+		excludedFolderDesc.append(
+			'Notes in the excluded folder will not be moved.',
+			descEl.createEl('br'),
+			'This takes precedence over the notes movement rules.'
+		);
+		new Setting(this.containerEl)
+
+			.setName('Add Excluded Folder')
+			.setDesc(excludedFolderDesc)
+			.addButton((button: ButtonComponent) => {
+				button
+					.setTooltip('Add Excluded Folders')
+					.setButtonText('+')
+					.setCta()
+					.onClick(async () => {
+						this.plugin.settings.excluded_folder.push({
+							folder: '',
+						});
+						await this.plugin.saveSettings();
+						this.display();
+					});
+			});
+
+		this.plugin.settings.excluded_folder.forEach((excluded_folder, index) => {
+			const s = new Setting(this.containerEl)
+				.addSearch((cb) => {
+					new FolderSuggest(this.app, cb.inputEl);
+					cb.setPlaceholder('Folder')
+						.setValue(excluded_folder.folder)
+						.onChange(async (newFolder) => {
+							this.plugin.settings.excluded_folder[index].folder = newFolder;
+							await this.plugin.saveSettings();
+						});
+				})
+
+				.addExtraButton((cb) => {
+					cb.setIcon('up-chevron-glyph')
+						.setTooltip('Move up')
+						.onClick(async () => {
+							arrayMove(this.plugin.settings.excluded_folder, index, index - 1);
+							await this.plugin.saveSettings();
+							this.display();
+						});
+				})
+				.addExtraButton((cb) => {
+					cb.setIcon('down-chevron-glyph')
+						.setTooltip('Move down')
+						.onClick(async () => {
+							arrayMove(this.plugin.settings.excluded_folder, index, index + 1);
+							await this.plugin.saveSettings();
+							this.display();
+						});
+				})
+				.addExtraButton((cb) => {
+					cb.setIcon('cross')
+						.setTooltip('Delete')
+						.onClick(async () => {
+							this.plugin.settings.excluded_folder.splice(index, 1);
+							await this.plugin.saveSettings();
+							this.display();
+						});
+				});
+			s.infoEl.remove();
+		});
+
+		const statusBarTriggerIndicatorDesc = document.createDocumentFragment();
+		statusBarTriggerIndicatorDesc.append(
+			'The status bar will display [A] if the trigger is Automatic, and [M] for Manual.',
+			descEl.createEl('br'),
+			'To change the setting, you need to restart Obsidian.',
+			descEl.createEl('br'),
+			'Desktop only.'
+		);
+		new Setting(this.containerEl)
+			.setName('Status Bar Trigger Indicator')
+			.setDesc(statusBarTriggerIndicatorDesc)
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.statusBar_trigger_indicator).onChange(async (value) => {
+					this.plugin.settings.statusBar_trigger_indicator = value;
+					await this.plugin.saveSettings();
+					this.display();
+				});
+			});
 	}
 }
