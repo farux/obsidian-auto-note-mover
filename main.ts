@@ -15,13 +15,9 @@ export default class AutoNoteMover extends Plugin {
 			}
 			if (!(file instanceof TFile)) return;
 
-			const fileSet: Set<TFile> = new Set();
-			fileSet.add(file);
-			for (let item of fileSet) {
-				// The rename event with no basename change will be terminated.
-				if (oldPath && oldPath.split('/').pop() === item.basename + '.' + item.extension) {
-					return;
-				}
+			// The rename event with no basename change will be terminated.
+			if (oldPath && oldPath.split('/').pop() === file.basename + '.' + file.extension) {
+				return;
 			}
 
 			const fileCache = this.app.metadataCache.getFileCache(file);
@@ -68,6 +64,8 @@ export default class AutoNoteMover extends Plugin {
 			this.registerEvent(this.app.vault.on('create', (file) => fileCheck(file)));
 			this.registerEvent(this.app.metadataCache.on('changed', (file) => fileCheck(file)));
 			this.registerEvent(this.app.vault.on('rename', (file, oldPath) => fileCheck(file, oldPath)));
+			// SettingTab dropdown change detection for status bar indicator... There may be another way.
+			// this.registerDomEvent(window, 'change', setIndicator);
 		});
 
 		const moveNoteCommand = (view: MarkdownView) => {
