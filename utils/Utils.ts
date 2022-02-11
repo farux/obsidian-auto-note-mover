@@ -64,10 +64,10 @@ export const arrayMove = <T>(array: T[], fromIndex: number, toIndex: number): vo
 	array[toIndex] = temp;
 };
 
-/* export const getTriggerIndicator = (trigger: string) => {
+export const getTriggerIndicator = (trigger: string) => {
 	if (trigger === 'Automatic') {
 		return `[A]`;
 	} else {
 		return `[M]`;
 	}
-}; */
+};
