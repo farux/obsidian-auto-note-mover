@@ -26,7 +26,7 @@ export const DEFAULT_SETTINGS: AutoNoteMoverSettings = {
 	trigger_auto_manual: 'Automatic',
 	statusBar_trigger_indicator: true,
 	folder_tag_pattern: [{ folder: '', tag: '', pattern: '' }],
-	excluded_folder: [{ folder: '' }],
+	excluded_folder: [{ folder: 'Please remove this.' }],
 };
 
 export class AutoNoteMoverSettingTab extends PluginSettingTab {
@@ -159,7 +159,7 @@ export class AutoNoteMoverSettingTab extends PluginSettingTab {
 					cb.setPlaceholder('Folder')
 						.setValue(folder_tag_pattern.folder)
 						.onChange(async (newFolder) => {
-							this.plugin.settings.folder_tag_pattern[index].folder = newFolder;
+							this.plugin.settings.folder_tag_pattern[index].folder = newFolder.trim();
 							await this.plugin.saveSettings();
 						});
 				})
@@ -178,7 +178,7 @@ export class AutoNoteMoverSettingTab extends PluginSettingTab {
 								return;
 							}
 
-							this.plugin.settings.folder_tag_pattern[index].tag = newTag;
+							this.plugin.settings.folder_tag_pattern[index].tag = newTag.trim();
 							await this.plugin.saveSettings();
 						});
 				})
