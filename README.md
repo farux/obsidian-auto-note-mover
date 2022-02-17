@@ -82,6 +82,15 @@ Title: Tested by JavaScript regular expressions.
 ![fm0](https://user-images.githubusercontent.com/33874906/152722074-d550e13c-2955-40ab-b324-7e934d86ea1a.png)
 
 
+## Troubleshooting
+
+### 1. Notes do not move.
+
+If the note is in the root of the vault, try deleting the empty line in the Exclude Folder setting.
+An empty line in the Exclude folder means the root of the vault.
+
+Also, check that the rule does not contain any extra blank spaces.
+
 ## Attribution
 suggest.ts and file-suggest.ts are copyrighted works of Liam Cain (https://github.com/liamcain) obsidian-periodic-notes (https://github.com/liamcain/obsidian-periodic-notes).
 
