@@ -1,6 +1,6 @@
 {
 	"name": "auto-note-mover",
-	"version": "1.0.8",
+	"version": "1.0.9",
 	"description": "Auto Note Mover will automatically move the active notes to their respective folders according to the rules.",
 	"main": "main.js",
 	"scripts": {
