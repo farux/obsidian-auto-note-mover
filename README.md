@@ -86,10 +86,8 @@ Title: Tested by JavaScript regular expressions.
 
 ### 1. Notes do not move.
 
-If the note is in the root of the vault, try deleting the empty line in the Exclude Folder setting.
-An empty line in the Exclude folder means the root of the vault.
-
-Also, check that the rule does not contain any extra blank spaces.
+Make sure that the rules are correct, that no excluded folders are set, and that they are not disabled in the front matter.
+Another possibility is that if the vault is monitored by a real-time sync software like Dropbox, if the editing overlaps with the timing of the sync, the sync software might lock the note and prevent it from being moved.
 
 ## Attribution
 suggest.ts and file-suggest.ts are copyrighted works of Liam Cain (https://github.com/liamcain) obsidian-periodic-notes (https://github.com/liamcain/obsidian-periodic-notes).
