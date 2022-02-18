@@ -26,7 +26,7 @@ export const DEFAULT_SETTINGS: AutoNoteMoverSettings = {
 	trigger_auto_manual: 'Automatic',
 	statusBar_trigger_indicator: true,
 	folder_tag_pattern: [{ folder: '', tag: '', pattern: '' }],
-	excluded_folder: [{ folder: 'Please remove this.' }],
+	excluded_folder: [{ folder: '' }],
 };
 
 export class AutoNoteMoverSettingTab extends PluginSettingTab {
