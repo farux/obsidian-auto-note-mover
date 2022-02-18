@@ -86,7 +86,7 @@ Title: Tested by JavaScript regular expressions.
 
 ### 1. Notes do not move.
 
-Make sure that the rules are correct, that no excluded folders are set, and that they are not disabled in the front matter.
+Make sure that the rules are correct, that no excluded folders are set, and that they are not disabled in the frontmatter.
 Another possibility is that if the vault is monitored by a real-time sync software like Dropbox, if the editing overlaps with the timing of the sync, the sync software might lock the note and prevent it from being moved.
 
 ## Attribution
