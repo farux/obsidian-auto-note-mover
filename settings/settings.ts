@@ -17,6 +17,7 @@ export interface ExcludedFolder {
 
 export interface AutoNoteMoverSettings {
 	trigger_auto_manual: string;
+	use_regex_to_check_for_tags: boolean;
 	statusBar_trigger_indicator: boolean;
 	folder_tag_pattern: Array<FolderTagPattern>;
 	excluded_folder: Array<ExcludedFolder>;
@@ -24,6 +25,7 @@ export interface AutoNoteMoverSettings {
 
 export const DEFAULT_SETTINGS: AutoNoteMoverSettings = {
 	trigger_auto_manual: 'Automatic',
+	use_regex_to_check_for_tags: false,
 	statusBar_trigger_indicator: true,
 	folder_tag_pattern: [{ folder: '', tag: '', pattern: '' }],
 	excluded_folder: [{ folder: '' }],
@@ -99,6 +101,30 @@ export class AutoNoteMoverSettingTab extends PluginSettingTab {
 						this.display();
 					})
 			);
+
+		const useRegexToCheckForTags = document.createDocumentFragment();
+		useRegexToCheckForTags.append(
+			'If enabled, tags will be checked with regular expressions.',
+			descEl.createEl('br'),
+			'For example, if you want to match the #tag, you would write ',
+			descEl.createEl('strong', { text: '^#tag$' }),
+			descEl.createEl('br'),
+			'This setting is for a specific purpose, such as specifying nested tags in bulk.',
+			descEl.createEl('br'),
+			descEl.createEl('strong', {
+				text: 'If you want to use the suggested tags as they are, it is recommended to disable this setting.',
+			})
+		);
+		new Setting(this.containerEl)
+			.setName('Use regular expressions to check for tags')
+			.setDesc(useRegexToCheckForTags)
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.use_regex_to_check_for_tags).onChange(async (value) => {
+					this.plugin.settings.use_regex_to_check_for_tags = value;
+					await this.plugin.saveSettings();
+					this.display();
+				});
+			});
 
 		const ruleDesc = document.createDocumentFragment();
 		ruleDesc.append(
@@ -177,8 +203,11 @@ export class AutoNoteMoverSettingTab extends PluginSettingTab {
 								new Notice('This tag is already used.');
 								return;
 							}
-
-							this.plugin.settings.folder_tag_pattern[index].tag = newTag.trim();
+							if (!this.plugin.settings.use_regex_to_check_for_tags) {
+								this.plugin.settings.folder_tag_pattern[index].tag = newTag.trim();
+							} else if (this.plugin.settings.use_regex_to_check_for_tags) {
+								this.plugin.settings.folder_tag_pattern[index].tag = newTag;
+							}
 							await this.plugin.saveSettings();
 						});
 				})
