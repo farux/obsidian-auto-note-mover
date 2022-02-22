@@ -9,6 +9,7 @@ export default class AutoNoteMover extends Plugin {
 		await this.loadSettings();
 		const folderTagPattern = this.settings.folder_tag_pattern;
 		const excludedFolder = this.settings.excluded_folder;
+
 		const fileCheck = (file: TAbstractFile, oldPath?: string, caller?: string) => {
 			if (this.settings.trigger_auto_manual !== 'Automatic' && caller !== 'cmd') {
 				return;
@@ -38,6 +39,7 @@ export default class AutoNoteMover extends Plugin {
 			const fileFullName = file.basename + '.' + file.extension;
 			const settingsLength = folderTagPattern.length;
 			const cacheTag = getAllTags(fileCache);
+
 			// checker
 			for (let i = 0; i < settingsLength; i++) {
 				const settingFolder = folderTagPattern[i].folder;
@@ -45,9 +47,17 @@ export default class AutoNoteMover extends Plugin {
 				const settingPattern = folderTagPattern[i].pattern;
 				// Tag check
 				if (!settingPattern) {
-					if (cacheTag.find((e) => e === settingTag)) {
-						fileMove(this.app, settingFolder, fileFullName, file);
-						break;
+					if (!this.settings.use_regex_to_check_for_tags) {
+						if (cacheTag.find((e) => e === settingTag)) {
+							fileMove(this.app, settingFolder, fileFullName, file);
+							break;
+						}
+					} else if (this.settings.use_regex_to_check_for_tags) {
+						const regex = new RegExp(settingTag);
+						if (cacheTag.find((e) => regex.test(e))) {
+							fileMove(this.app, settingFolder, fileFullName, file);
+							break;
+						}
 					}
 					// Title check
 				} else if (!settingTag) {
