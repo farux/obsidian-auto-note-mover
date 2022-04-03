@@ -91,7 +91,9 @@ Another possibility is that if the vault is monitored by a real-time sync softwa
 
 ### 2. Duplicate notes
 Check your sync software.
+
 Duplicate notes due to iCloud glitches have been reported.
+https://github.com/farux/obsidian-auto-note-mover/issues/19
 
 ## Attribution
 suggest.ts and file-suggest.ts are copyrighted works of Liam Cain (https://github.com/liamcain) obsidian-periodic-notes (https://github.com/liamcain/obsidian-periodic-notes).
