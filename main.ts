@@ -24,8 +24,17 @@ export default class AutoNoteMover extends Plugin {
 			// Excluded Folder check
 			const excludedFolderLength = excludedFolder.length;
 			for (let i = 0; i < excludedFolderLength; i++) {
-				if (excludedFolder[i].folder && file.parent.path === normalizePath(excludedFolder[i].folder)) {
+				if (
+					!this.settings.use_regex_to_check_for_excluded_folder &&
+					excludedFolder[i].folder &&
+					file.parent.path === normalizePath(excludedFolder[i].folder)
+				) {
 					return;
+				} else if (this.settings.use_regex_to_check_for_excluded_folder && excludedFolder[i].folder) {
+					const regex = new RegExp(excludedFolder[i].folder);
+					if (regex.test(file.parent.path)) {
+						return;
+					}
 				}
 			}
 

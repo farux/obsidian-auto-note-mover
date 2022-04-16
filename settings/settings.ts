@@ -20,6 +20,7 @@ export interface AutoNoteMoverSettings {
 	use_regex_to_check_for_tags: boolean;
 	statusBar_trigger_indicator: boolean;
 	folder_tag_pattern: Array<FolderTagPattern>;
+	use_regex_to_check_for_excluded_folder: boolean;
 	excluded_folder: Array<ExcludedFolder>;
 }
 
@@ -28,6 +29,7 @@ export const DEFAULT_SETTINGS: AutoNoteMoverSettings = {
 	use_regex_to_check_for_tags: false,
 	statusBar_trigger_indicator: true,
 	folder_tag_pattern: [{ folder: '', tag: '', pattern: '' }],
+	use_regex_to_check_for_excluded_folder: false,
 	excluded_folder: [{ folder: '' }],
 };
 
@@ -259,6 +261,22 @@ export class AutoNoteMoverSettingTab extends PluginSettingTab {
 				});
 			s.infoEl.remove();
 		});
+
+		const useRegexToCheckForExcludedFolder = document.createDocumentFragment();
+		useRegexToCheckForExcludedFolder.append(
+			'If enabled, excluded folder will be checked with regular expressions.'
+		);
+
+		new Setting(this.containerEl)
+			.setName('Use regular expressions to check for excluded folder')
+			.setDesc(useRegexToCheckForExcludedFolder)
+			.addToggle((toggle) => {
+				toggle.setValue(this.plugin.settings.use_regex_to_check_for_excluded_folder).onChange(async (value) => {
+					this.plugin.settings.use_regex_to_check_for_excluded_folder = value;
+					await this.plugin.saveSettings();
+					this.display();
+				});
+			});
 
 		const excludedFolderDesc = document.createDocumentFragment();
 		excludedFolderDesc.append(
