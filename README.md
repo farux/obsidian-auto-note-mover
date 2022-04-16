@@ -89,6 +89,12 @@ Title: Tested by JavaScript regular expressions.
 Make sure that the rules are correct, that no excluded folders are set, and that they are not disabled in the frontmatter.
 Another possibility is that if the vault is monitored by a real-time sync software like Dropbox, if the editing overlaps with the timing of the sync, the sync software might lock the note and prevent it from being moved.
 
+### 2. Duplicate notes
+Check your sync software.
+
+Duplicate notes due to iCloud glitches have been reported.
+https://github.com/farux/obsidian-auto-note-mover/issues/19
+
 ## Attribution
 suggest.ts and file-suggest.ts are copyrighted works of Liam Cain (https://github.com/liamcain) obsidian-periodic-notes (https://github.com/liamcain/obsidian-periodic-notes).
 
