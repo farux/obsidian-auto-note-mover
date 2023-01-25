@@ -63,7 +63,7 @@ export default class AutoNoteMover extends Plugin {
 						if (matches) {
 							const match = regex.exec(matches);
 							if (match) {
-								const newSettingFolder = settingFolder.replace(/\$(\d)/g, (_, i) => match[i]);
+								const newSettingFolder = settingFolder.replace(/\$(\d)/g, (_, i) => match[i] || '');
 								fileMove(this, newSettingFolder, fileFullName, file, template);
 								break;
 							}
