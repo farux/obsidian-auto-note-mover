@@ -51,7 +51,7 @@ export const fileMove = async (plugin: AutoNoteMover, settingFolder: string, fil
 	if (!isTFExists(app, settingFolder, TFolder)) {
 		if (settings.create_non_existant_folders) {
 			console.log(`[Auto Note Mover] Creating folder: ${settingFolder}`);
-			app.vault.createFolder(normalizePath(settingFolder));
+			await app.vault.createFolder(normalizePath(settingFolder));
 		} else {
 			console.error(`[Auto Note Mover] The destination folder "${settingFolder}" does not exist.`);
 			new Notice(`[Auto Note Mover]\n"Error: The destination folder\n"${settingFolder}"\ndoes not exist.`);
