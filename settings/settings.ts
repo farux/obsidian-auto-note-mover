@@ -1,14 +1,15 @@
-import AutoNoteMover from 'main';
-import { App, Notice, PluginSettingTab, Setting, ButtonComponent } from 'obsidian';
+import { App, ButtonComponent, Notice, PluginSettingTab, Setting } from 'obsidian';
+import { FileSuggest, FolderSuggest } from 'suggests/file-suggest';
+import { arrayMove, getTemplater } from 'utils/Utils';
 
-import { FolderSuggest } from 'suggests/file-suggest';
+import AutoNoteMover from 'main';
 import { TagSuggest } from 'suggests/tag-suggest';
-import { arrayMove } from 'utils/Utils';
 
 export interface FolderTagPattern {
 	folder: string;
 	tag: string;
 	pattern: string;
+	template_file: string,
 }
 
 export interface ExcludedFolder {
@@ -22,15 +23,17 @@ export interface AutoNoteMoverSettings {
 	folder_tag_pattern: Array<FolderTagPattern>;
 	use_regex_to_check_for_excluded_folder: boolean;
 	excluded_folder: Array<ExcludedFolder>;
+	create_non_existant_folders: boolean;
 }
 
 export const DEFAULT_SETTINGS: AutoNoteMoverSettings = {
 	trigger_auto_manual: 'Automatic',
 	use_regex_to_check_for_tags: false,
 	statusBar_trigger_indicator: true,
-	folder_tag_pattern: [{ folder: '', tag: '', pattern: '' }],
+	folder_tag_pattern: [{ folder: '', tag: '', pattern: '', template_file: '' }],
 	use_regex_to_check_for_excluded_folder: false,
 	excluded_folder: [{ folder: '' }],
+	create_non_existant_folders: false,
 };
 
 export class AutoNoteMoverSettingTab extends PluginSettingTab {
@@ -57,23 +60,6 @@ export class AutoNoteMoverSettingTab extends PluginSettingTab {
 		new Setting(this.containerEl).setDesc(
 			'Auto Note Mover will automatically move the active notes to their respective folders according to the rules.'
 		);
-
-		/* new Setting(this.containerEl)
-			.setName('Auto Note Mover')
-			.setDesc('Enable or disable the Auto Note Mover.')
-			.addToggle((toggle) => {
-				toggle
-					.setValue(this.plugin.settings.enable_auto_note_mover)
-					.onChange(async (use_new_auto_note_mover) => {
-						this.plugin.settings.enable_auto_note_mover = use_new_auto_note_mover;
-						await this.plugin.saveSettings();
-						this.display();
-					});
-			});
-
-		if (!this.plugin.settings.enable_auto_note_mover) {
-			return;
-		} */
 
 		const triggerDesc = document.createDocumentFragment();
 		triggerDesc.append(
@@ -103,6 +89,17 @@ export class AutoNoteMoverSettingTab extends PluginSettingTab {
 						this.display();
 					})
 			);
+		new Setting(this.containerEl)
+		.setName('Create Folders if they don\'t exist')
+		.setDesc('This can be especially useful when using capture groups in the destination folder.')
+		.addToggle((toggle) => {
+			toggle.setValue(this.plugin.settings.create_non_existant_folders).onChange(async (value) => {
+				this.plugin.settings.create_non_existant_folders = value;
+				await this.plugin.saveSettings();
+				this.display();
+			});
+		});
+
 
 		const useRegexToCheckForTags = document.createDocumentFragment();
 		useRegexToCheckForTags.append(
@@ -167,6 +164,7 @@ export class AutoNoteMoverSettingTab extends PluginSettingTab {
 							folder: '',
 							tag: '',
 							pattern: '',
+							template_file: '',
 						});
 						await this.plugin.saveSettings();
 						this.display();
@@ -231,8 +229,18 @@ export class AutoNoteMoverSettingTab extends PluginSettingTab {
 							this.plugin.settings.folder_tag_pattern[index].pattern = newPattern;
 							await this.plugin.saveSettings();
 						});
-				})
-				.addExtraButton((cb) => {
+				});
+			if (getTemplater(this.app)) s.addSearch((cb) => {
+				new FileSuggest(this.app, cb.inputEl);
+				cb.setPlaceholder('Template File')
+					.setValue(folder_tag_pattern.template_file)
+					.onChange(async (newTemplateFile) => {
+						this.plugin.settings.folder_tag_pattern[index].template_file = newTemplateFile.trim();
+						await this.plugin.saveSettings();
+					});
+			});
+
+			s.addExtraButton((cb) => {
 					cb.setIcon('up-chevron-glyph')
 						.setTooltip('Move up')
 						.onClick(async () => {

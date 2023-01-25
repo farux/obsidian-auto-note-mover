@@ -1,6 +1,6 @@
-import { MarkdownView, Plugin, TFile, getAllTags, Notice, TAbstractFile, normalizePath } from 'obsidian';
-import { DEFAULT_SETTINGS, AutoNoteMoverSettings, AutoNoteMoverSettingTab } from 'settings/settings';
-import { fileMove, getTriggerIndicator, isFmDisable } from 'utils/Utils';
+import { App, MarkdownView, Notice, Plugin, TAbstractFile, TFile, debounce, getAllTags, normalizePath } from 'obsidian';
+import { AutoNoteMoverSettingTab, AutoNoteMoverSettings, DEFAULT_SETTINGS } from 'settings/settings';
+import { fileMove, findTFile, getTriggerIndicator, isFmDisable } from 'utils/Utils';
 
 export default class AutoNoteMover extends Plugin {
 	settings: AutoNoteMoverSettings;
@@ -54,26 +54,33 @@ export default class AutoNoteMover extends Plugin {
 				const settingFolder = folderTagPattern[i].folder;
 				const settingTag = folderTagPattern[i].tag;
 				const settingPattern = folderTagPattern[i].pattern;
+				const template = findTFile(folderTagPattern[i].template_file, this.app);
 				// Tag check
 				if (!settingPattern) {
-					if (!this.settings.use_regex_to_check_for_tags) {
-						if (cacheTag.find((e) => e === settingTag)) {
-							fileMove(this.app, settingFolder, fileFullName, file);
-							break;
-						}
-					} else if (this.settings.use_regex_to_check_for_tags) {
+					if (this.settings.use_regex_to_check_for_tags) {
 						const regex = new RegExp(settingTag);
-						if (cacheTag.find((e) => regex.test(e))) {
-							fileMove(this.app, settingFolder, fileFullName, file);
-							break;
+						const matches = cacheTag.find((e) => regex.test(e));
+						if (matches) {
+							const match = regex.exec(matches);
+							if (match) {
+								const newSettingFolder = settingFolder.replace(/\$(\d)/g, (_, i) => match[i] || '');
+								fileMove(this, newSettingFolder, fileFullName, file, template);
+								break;
+							}
 						}
 					}
+					else {
+						if (cacheTag.find((e) => e === settingTag)) {
+							fileMove(this, settingFolder, fileFullName, file, template);
+							break;
+						}
+					}  
 					// Title check
 				} else if (!settingTag) {
 					const regex = new RegExp(settingPattern);
 					const isMatch = regex.test(fileName);
 					if (isMatch) {
-						fileMove(this.app, settingFolder, fileFullName, file);
+						fileMove(this, settingFolder, fileFullName, file, template);
 						break;
 					}
 				}
@@ -94,9 +101,9 @@ export default class AutoNoteMover extends Plugin {
 		}
 
 		this.app.workspace.onLayoutReady(() => {
-			this.registerEvent(this.app.vault.on('create', (file) => fileCheck(file)));
-			this.registerEvent(this.app.metadataCache.on('changed', (file) => fileCheck(file)));
-			this.registerEvent(this.app.vault.on('rename', (file, oldPath) => fileCheck(file, oldPath)));
+			this.registerEvent(this.app.vault.on('create', (file) => debounce(fileCheck, 100)(file)));
+			this.registerEvent(this.app.metadataCache.on('changed', (file) => debounce(fileCheck, 100)(file)));
+			this.registerEvent(this.app.vault.on('rename', (file, oldPath) => debounce(fileCheck, 100)(file, oldPath)));
 		});
 
 		const moveNoteCommand = (view: MarkdownView) => {

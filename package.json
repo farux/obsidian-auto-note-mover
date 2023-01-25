@@ -11,14 +11,14 @@
 	"author": "",
 	"license": "MIT",
 	"devDependencies": {
-		"@types/node": "^16.11.6",
-		"@typescript-eslint/eslint-plugin": "^5.2.0",
-		"@typescript-eslint/parser": "^5.2.0",
-		"builtin-modules": "^3.2.0",
-		"esbuild": "0.13.12",
-		"obsidian": "^0.12.17",
-		"tslib": "2.3.1",
-		"typescript": "4.4.4"
+		"@types/node": "^16.18.11",
+		"@typescript-eslint/eslint-plugin": "^5.49.0",
+		"@typescript-eslint/parser": "^5.49.0",
+		"builtin-modules": "^3.3.0",
+		"esbuild": "^0.14.54",
+		"obsidian": "^1.1.1",
+		"tslib": "^2.4.1",
+		"typescript": "^4.9.4"
 	},
 	"dependencies": {
 		"@popperjs/core": "^2.11.2"
