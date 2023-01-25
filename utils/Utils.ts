@@ -1,5 +1,7 @@
 import { App, CachedMetadata, Notice, TFile, TFolder, normalizePath, parseFrontMatterEntry } from 'obsidian';
 
+import AutoNoteMover from '../main';
+
 // Disable AutoNoteMover when "AutoNoteMover: disable" is present in the frontmatter.
 export const isFmDisable = (fileCache: CachedMetadata) => {
 	if(!fileCache) return false;
@@ -43,12 +45,18 @@ export async function writeTemplate(app: App, template: TFile) {
 		await templater.append_template_to_active_file(template);
 }
 
-export const fileMove = async (app: App, settingFolder: string, fileFullName: string, file: TFile, template: TFile) => {
-	// Does the destination folder exist?
+export const fileMove = async (plugin: AutoNoteMover, settingFolder: string, fileFullName: string, file: TFile, template: TFile) => {
+	const { app, settings } = plugin;
+	console.log(`Setting Folder: ${settingFolder}`);
 	if (!isTFExists(app, settingFolder, TFolder)) {
-		console.error(`[Auto Note Mover] The destination folder "${settingFolder}" does not exist.`);
-		new Notice(`[Auto Note Mover]\n"Error: The destination folder\n"${settingFolder}"\ndoes not exist.`);
-		return;
+		if (settings.create_non_existant_folders) {
+			console.log(`[Auto Note Mover] Creating folder: ${settingFolder}`);
+			app.vault.createFolder(normalizePath(settingFolder));
+		} else {
+			console.error(`[Auto Note Mover] The destination folder "${settingFolder}" does not exist.`);
+			new Notice(`[Auto Note Mover]\n"Error: The destination folder\n"${settingFolder}"\ndoes not exist.`);
+			return;
+		}
 	}
 	// Does the file with the same name exist in the destination folder?
 	const newPath = normalizePath(settingFolder + '/' + fileFullName);

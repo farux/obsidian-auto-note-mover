@@ -1,4 +1,4 @@
-import { App, MarkdownView, Notice, Plugin, TAbstractFile, TFile, getAllTags, normalizePath } from 'obsidian';
+import { App, MarkdownView, Notice, Plugin, TAbstractFile, TFile, debounce, getAllTags, normalizePath } from 'obsidian';
 import { AutoNoteMoverSettingTab, AutoNoteMoverSettings, DEFAULT_SETTINGS } from 'settings/settings';
 import { fileMove, findTFile, getTriggerIndicator, isFmDisable } from 'utils/Utils';
 
@@ -57,24 +57,30 @@ export default class AutoNoteMover extends Plugin {
 				const template = findTFile(folderTagPattern[i].template_file, this.app);
 				// Tag check
 				if (!settingPattern) {
-					if (!this.settings.use_regex_to_check_for_tags) {
-						if (cacheTag.find((e) => e === settingTag)) {
-							fileMove(this.app, settingFolder, fileFullName, file, template);
-							break;
-						}
-					} else if (this.settings.use_regex_to_check_for_tags) {
+					if (this.settings.use_regex_to_check_for_tags) {
 						const regex = new RegExp(settingTag);
-						if (cacheTag.find((e) => regex.test(e))) {
-							fileMove(this.app, settingFolder, fileFullName, file, template);
-							break;
+						const matches = cacheTag.find((e) => regex.test(e));
+						if (matches) {
+							const match = regex.exec(matches);
+							if (match) {
+								const newSettingFolder = settingFolder.replace(/\$(\d)/g, (_, i) => match[i]);
+								fileMove(this, newSettingFolder, fileFullName, file, template);
+								break;
+							}
 						}
 					}
+					else {
+						if (cacheTag.find((e) => e === settingTag)) {
+							fileMove(this, settingFolder, fileFullName, file, template);
+							break;
+						}
+					}  
 					// Title check
 				} else if (!settingTag) {
 					const regex = new RegExp(settingPattern);
 					const isMatch = regex.test(fileName);
 					if (isMatch) {
-						fileMove(this.app, settingFolder, fileFullName, file, template);
+						fileMove(this, settingFolder, fileFullName, file, template);
 						break;
 					}
 				}
@@ -95,9 +101,9 @@ export default class AutoNoteMover extends Plugin {
 		}
 
 		this.app.workspace.onLayoutReady(() => {
-			this.registerEvent(this.app.vault.on('create', (file) => fileCheck(file)));
-			this.registerEvent(this.app.metadataCache.on('changed', (file) => fileCheck(file)));
-			this.registerEvent(this.app.vault.on('rename', (file, oldPath) => fileCheck(file, oldPath)));
+			this.registerEvent(this.app.vault.on('create', (file) => debounce(fileCheck, 100)(file)));
+			this.registerEvent(this.app.metadataCache.on('changed', (file) => debounce(fileCheck, 100)(file)));
+			this.registerEvent(this.app.vault.on('rename', (file, oldPath) => debounce(fileCheck, 100)(file, oldPath)));
 		});
 
 		const moveNoteCommand = (view: MarkdownView) => {
