@@ -16,6 +16,7 @@ export interface ExcludedFolder {
 }
 
 export interface AutoNoteMoverSettings {
+	create_target_folders: boolean;
 	trigger_auto_manual: string;
 	use_regex_to_check_for_tags: boolean;
 	statusBar_trigger_indicator: boolean;
@@ -25,6 +26,7 @@ export interface AutoNoteMoverSettings {
 }
 
 export const DEFAULT_SETTINGS: AutoNoteMoverSettings = {
+	create_target_folders: false,
 	trigger_auto_manual: 'Automatic',
 	use_regex_to_check_for_tags: false,
 	statusBar_trigger_indicator: true,
@@ -132,15 +134,17 @@ export class AutoNoteMoverSettingTab extends PluginSettingTab {
 		ruleDesc.append(
 			'1. Set the destination folder.',
 			descEl.createEl('br'),
-			'2. Set a tag or title that matches the note you want to move. ',
-			descEl.createEl('strong', { text: 'You can set either the tag or the title. ' }),
+			'2. Set a tag(s) or title that matches the note you want to move. ',
+			descEl.createEl('strong', { text: 'You can set either the tag(s) or the title. ' }),
 			descEl.createEl('br'),
 			'3. The rules are checked in order from the top. The notes will be moved to the folder with the ',
 			descEl.createEl('strong', { text: 'first matching rule.' }),
 			descEl.createEl('br'),
-			'Tag: Be sure to add a',
+			'Tag(s): Be sure to add a',
 			descEl.createEl('strong', { text: ' # ' }),
-			'at the beginning.',
+			'at the beginning. If multiple tags are supposed to match, use ',
+			descEl.createEl('strong', { text: ' , ' }),
+			'as separator.',
 			descEl.createEl('br'),
 			'Title: Tested by JavaScript regular expressions.',
 			descEl.createEl('br'),
@@ -194,7 +198,7 @@ export class AutoNoteMoverSettingTab extends PluginSettingTab {
 
 				.addSearch((cb) => {
 					new TagSuggest(this.app, cb.inputEl);
-					cb.setPlaceholder('Tag')
+					cb.setPlaceholder('Tag(s)')
 						.setValue(folder_tag_pattern.tag)
 						.onChange(async (newTag) => {
 							if (this.plugin.settings.folder_tag_pattern[index].pattern) {
@@ -260,6 +264,23 @@ export class AutoNoteMoverSettingTab extends PluginSettingTab {
 						});
 				});
 			s.infoEl.remove();
+		});
+
+		const createFolders = document.createDocumentFragment();
+		createFolders.append(
+			'If enabled, target folders will be created.'
+		);
+
+
+		new Setting(this.containerEl)
+		.setName('Create target folders')
+		.setDesc(createFolders)
+		.addToggle((toggle) => {
+			toggle.setValue(this.plugin.settings.create_target_folders).onChange(async (value) => {
+				this.plugin.settings.create_target_folders = value;
+				await this.plugin.saveSettings();
+				this.display();
+			});
 		});
 
 		const useRegexToCheckForExcludedFolder = document.createDocumentFragment();
