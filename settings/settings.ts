@@ -16,6 +16,7 @@ export interface ExcludedFolder {
 }
 
 export interface AutoNoteMoverSettings {
+	create_target_folders: boolean;
 	trigger_auto_manual: string;
 	use_regex_to_check_for_tags: boolean;
 	statusBar_trigger_indicator: boolean;
@@ -25,6 +26,7 @@ export interface AutoNoteMoverSettings {
 }
 
 export const DEFAULT_SETTINGS: AutoNoteMoverSettings = {
+	create_target_folders: false,
 	trigger_auto_manual: 'Automatic',
 	use_regex_to_check_for_tags: false,
 	statusBar_trigger_indicator: true,
@@ -262,6 +264,23 @@ export class AutoNoteMoverSettingTab extends PluginSettingTab {
 						});
 				});
 			s.infoEl.remove();
+		});
+
+		const createFolders = document.createDocumentFragment();
+		createFolders.append(
+			'If enabled, target folders will be created.'
+		);
+
+
+		new Setting(this.containerEl)
+		.setName('Create target folders')
+		.setDesc(createFolders)
+		.addToggle((toggle) => {
+			toggle.setValue(this.plugin.settings.create_target_folders).onChange(async (value) => {
+				this.plugin.settings.create_target_folders = value;
+				await this.plugin.saveSettings();
+				this.display();
+			});
 		});
 
 		const useRegexToCheckForExcludedFolder = document.createDocumentFragment();
