@@ -29,22 +29,24 @@ export class GetAllTagsInTheVault extends Plugin {
 
 export class TagSuggest extends TextInputSuggest<string> {
 	manifest: PluginManifest;
-	tagList: GetAllTagsInTheVault;
-	tagMatch: string[];
-	lowerCaseInputStr: string;
 
 	getSuggestions(inputStr: string): string[] {
-		this.tagList = new GetAllTagsInTheVault(this.app, this.manifest);
-		this.tagMatch = [];
-		this.lowerCaseInputStr = inputStr.toLowerCase();
+		const tagList = new GetAllTagsInTheVault(this.app, this.manifest);
+		const tagMatch: string[] = [];
+		const previousTags = this.splitTags(inputStr);
+		const lowerCaseInputStr = previousTags[previousTags.length - 1]
 
-		this.tagList.pull().forEach((Tag: string) => {
-			if (Tag.toLowerCase().contains(this.lowerCaseInputStr)) {
-				this.tagMatch.push(Tag);
+		tagList.pull().forEach((Tag: string) => {
+			if (Tag.toLowerCase().contains(lowerCaseInputStr)) {
+				tagMatch.push(Tag);
 			}
 		});
 
-		return this.tagMatch;
+		return tagMatch;
+	}
+
+	private splitTags(inputStr: string): string[] {
+		return inputStr.split(',').map(tag => tag.trim().toLowerCase());
 	}
 
 	renderSuggestion(Tag: string, el: HTMLElement): void {
@@ -52,7 +54,9 @@ export class TagSuggest extends TextInputSuggest<string> {
 	}
 
 	selectSuggestion(Tag: string): void {
-		this.inputEl.value = Tag;
+		const previousTags = this.splitTags(this.inputEl.value).slice(0, -1);
+		previousTags.push(Tag)
+		this.inputEl.value = previousTags.toString();
 		this.inputEl.trigger('input');
 		this.close();
 	}

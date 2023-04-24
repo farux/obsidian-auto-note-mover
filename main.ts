@@ -52,24 +52,25 @@ export default class AutoNoteMover extends Plugin {
 			// checker
 			for (let i = 0; i < settingsLength; i++) {
 				const settingFolder = folderTagPattern[i].folder;
-				const settingTag = folderTagPattern[i].tag;
+				const settingTags = folderTagPattern[i].tag?.split(',').map(tag => tag.trim());
+				const settingTagRegex = folderTagPattern[i].tag;
 				const settingPattern = folderTagPattern[i].pattern;
 				// Tag check
 				if (!settingPattern) {
 					if (!this.settings.use_regex_to_check_for_tags) {
-						if (cacheTag.find((e) => e === settingTag)) {
+						if (settingTags.every(tag => cacheTag.contains(tag))) {
 							fileMove(this.app, settingFolder, fileFullName, file);
 							break;
 						}
-					} else if (this.settings.use_regex_to_check_for_tags) {
-						const regex = new RegExp(settingTag);
+					} else {
+						const regex = new RegExp(settingTagRegex);
 						if (cacheTag.find((e) => regex.test(e))) {
 							fileMove(this.app, settingFolder, fileFullName, file);
 							break;
 						}
 					}
 					// Title check
-				} else if (!settingTag) {
+				} else if (!settingTags) {
 					const regex = new RegExp(settingPattern);
 					const isMatch = regex.test(fileName);
 					if (isMatch) {
