@@ -1,4 +1,4 @@
-import { MarkdownView, Plugin, TFile, getAllTags, Notice, TAbstractFile, normalizePath } from 'obsidian';
+import { MarkdownView, Plugin, TFile, getAllTags, Notice, parseFrontMatterStringArray, TAbstractFile, normalizePath } from 'obsidian';
 import { DEFAULT_SETTINGS, AutoNoteMoverSettings, AutoNoteMoverSettingTab } from 'settings/settings';
 import { fileMove, getTriggerIndicator, isFmDisable } from 'utils/Utils';
 
@@ -53,9 +53,10 @@ export default class AutoNoteMover extends Plugin {
 			for (let i = 0; i < settingsLength; i++) {
 				const settingFolder = folderTagPattern[i].folder;
 				const settingTag = folderTagPattern[i].tag;
+				const settingFrontmatterProperty = folderTagPattern[i].frontmatterProperty;
 				const settingPattern = folderTagPattern[i].pattern;
 				// Tag check
-				if (!settingPattern) {
+				if (!settingPattern && !settingFrontmatterProperty) {
 					if (!this.settings.use_regex_to_check_for_tags) {
 						if (cacheTag.find((e) => e === settingTag)) {
 							fileMove(this.app, settingFolder, fileFullName, file);
@@ -69,10 +70,19 @@ export default class AutoNoteMover extends Plugin {
 						}
 					}
 					// Title check
-				} else if (!settingTag) {
+				} else if (!settingTag && !settingFrontmatterProperty) {
 					const regex = new RegExp(settingPattern);
 					const isMatch = regex.test(fileName);
 					if (isMatch) {
+						fileMove(this.app, settingFolder, fileFullName, file);
+						break;
+					}
+				} else if (!settingPattern && !settingTag) {
+					const property = settingFrontmatterProperty.split(":")
+					const propertyKey = property[0].trim()
+					const propertyValue = property[1].trim()
+					const fm = parseFrontMatterStringArray(fileCache.frontmatter, propertyKey);
+					if (fm && fm.length > 0 && fm.includes(propertyValue)) {
 						fileMove(this.app, settingFolder, fileFullName, file);
 						break;
 					}

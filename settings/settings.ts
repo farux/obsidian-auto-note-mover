@@ -8,6 +8,7 @@ import { arrayMove } from 'utils/Utils';
 export interface FolderTagPattern {
 	folder: string;
 	tag: string;
+	frontmatterProperty: string;
 	pattern: string;
 }
 
@@ -28,7 +29,7 @@ export const DEFAULT_SETTINGS: AutoNoteMoverSettings = {
 	trigger_auto_manual: 'Automatic',
 	use_regex_to_check_for_tags: false,
 	statusBar_trigger_indicator: true,
-	folder_tag_pattern: [{ folder: '', tag: '', pattern: '' }],
+	folder_tag_pattern: [{ folder: '', tag: '', frontmatterProperty: '', pattern: '' }],
 	use_regex_to_check_for_excluded_folder: false,
 	excluded_folder: [{ folder: '' }],
 };
@@ -132,8 +133,8 @@ export class AutoNoteMoverSettingTab extends PluginSettingTab {
 		ruleDesc.append(
 			'1. Set the destination folder.',
 			descEl.createEl('br'),
-			'2. Set a tag or title that matches the note you want to move. ',
-			descEl.createEl('strong', { text: 'You can set either the tag or the title. ' }),
+			'2. Set a tag, frontmatter property key:value or title that matches the note you want to move. ',
+			descEl.createEl('strong', { text: 'You can set either the tag, frontmatter property key:value or the title. ' }),
 			descEl.createEl('br'),
 			'3. The rules are checked in order from the top. The notes will be moved to the folder with the ',
 			descEl.createEl('strong', { text: 'first matching rule.' }),
@@ -141,6 +142,8 @@ export class AutoNoteMoverSettingTab extends PluginSettingTab {
 			'Tag: Be sure to add a',
 			descEl.createEl('strong', { text: ' # ' }),
 			'at the beginning.',
+			descEl.createEl('br'),
+			'FrontmatterProperty: Add frontmatter property key value pair for eg., status: In Progress.',
 			descEl.createEl('br'),
 			'Title: Tested by JavaScript regular expressions.',
 			descEl.createEl('br'),
@@ -166,6 +169,7 @@ export class AutoNoteMoverSettingTab extends PluginSettingTab {
 						this.plugin.settings.folder_tag_pattern.push({
 							folder: '',
 							tag: '',
+							frontmatterProperty: '',
 							pattern: '',
 						});
 						await this.plugin.saveSettings();
@@ -176,6 +180,7 @@ export class AutoNoteMoverSettingTab extends PluginSettingTab {
 		this.plugin.settings.folder_tag_pattern.forEach((folder_tag_pattern, index) => {
 			const settings = this.plugin.settings.folder_tag_pattern;
 			const settingTag = settings.map((e) => e['tag']);
+			const settingFrontmatterProperty = settings.map((e) => e['frontmatterProperty']);
 			const settingPattern = settings.map((e) => e['pattern']);
 			const checkArr = (arr: string[], val: string) => {
 				return arr.some((arrVal) => val === arrVal);
@@ -210,6 +215,20 @@ export class AutoNoteMoverSettingTab extends PluginSettingTab {
 							} else if (this.plugin.settings.use_regex_to_check_for_tags) {
 								this.plugin.settings.folder_tag_pattern[index].tag = newTag;
 							}
+							await this.plugin.saveSettings();
+						});
+				})
+
+				.addSearch((cb) => {
+					cb.setPlaceholder('Frontmatter property')
+						.setValue(folder_tag_pattern.frontmatterProperty)
+						.onChange(async (newFrontmatterProperty) => {
+							if (newFrontmatterProperty && checkArr(settingFrontmatterProperty, newFrontmatterProperty)) {
+								new Notice('This frontmatter property is already used.');
+								return;
+							}
+
+							this.plugin.settings.folder_tag_pattern[index].frontmatterProperty = newFrontmatterProperty;
 							await this.plugin.saveSettings();
 						});
 				})
