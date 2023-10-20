@@ -48,15 +48,29 @@ export default class AutoNoteMover extends Plugin {
 			const fileFullName = file.basename + '.' + file.extension;
 			const settingsLength = folderTagPattern.length;
 			const cacheTag = getAllTags(fileCache);
-
+			const frontmatter: any = fileCache.frontmatter ?? { };
+			
 			// checker
 			for (let i = 0; i < settingsLength; i++) {
 				const settingFolder = folderTagPattern[i].folder;
 				const settingTag = folderTagPattern[i].tag;
-				const settingPattern = folderTagPattern[i].pattern;
+				const settingTitleRegex = folderTagPattern[i].pattern;
 				// Tag check
-				if (!settingPattern) {
+				if (!settingTitleRegex) {
 					if (!this.settings.use_regex_to_check_for_tags) {
+						// is it a property?
+						if (!settingTag.startsWith('#')) {
+							const propVal = frontmatter[settingTag];
+							if (propVal) {
+									const firstValue = Array.isArray(propVal) ? propVal[0] : propVal;
+
+									if (firstValue) {
+											const destination = settingFolder.replace(`{{${settingTag}}}`, firstValue);
+											fileMove(this.app, destination, fileFullName, file);
+									}
+							}
+							break;
+						}
 						if (cacheTag.find((e) => e === settingTag)) {
 							fileMove(this.app, settingFolder, fileFullName, file);
 							break;
@@ -70,7 +84,7 @@ export default class AutoNoteMover extends Plugin {
 					}
 					// Title check
 				} else if (!settingTag) {
-					const regex = new RegExp(settingPattern);
+					const regex = new RegExp(settingTitleRegex);
 					const isMatch = regex.test(fileName);
 					if (isMatch) {
 						fileMove(this.app, settingFolder, fileFullName, file);
@@ -101,7 +115,7 @@ export default class AutoNoteMover extends Plugin {
 
 		const moveNoteCommand = (view: MarkdownView) => {
 			if (isFmDisable(this.app.metadataCache.getFileCache(view.file))) {
-				new Notice('Auto Note Mover is disabled in the frontmatter.');
+				new Notice('Auto Note Organizer is disabled in the frontmatter.');
 				return;
 			}
 			fileCheck(view.file, undefined, 'cmd');
@@ -128,11 +142,11 @@ export default class AutoNoteMover extends Plugin {
 				if (this.settings.trigger_auto_manual === 'Automatic') {
 					this.settings.trigger_auto_manual = 'Manual';
 					this.saveData(this.settings);
-					new Notice('[Auto Note Mover]\nTrigger is Manual.');
+					new Notice('[Auto Note Organizer]\nTrigger is Manual.');
 				} else if (this.settings.trigger_auto_manual === 'Manual') {
 					this.settings.trigger_auto_manual = 'Automatic';
 					this.saveData(this.settings);
-					new Notice('[Auto Note Mover]\nTrigger is Automatic.');
+					new Notice('[Auto Note Organizer]\nTrigger is Automatic.');
 				}
 				setIndicator();
 			},
