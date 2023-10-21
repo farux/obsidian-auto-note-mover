@@ -1,7 +1,7 @@
 import { MarkdownView, Plugin, TFile, getAllTags, Notice, TAbstractFile, normalizePath } from 'obsidian';
 import { DEFAULT_SETTINGS, AutoNoteMoverSettings, AutoNoteMoverSettingTab } from 'settings/settings';
 import { fileMove, getTriggerIndicator, isFmDisable } from 'utils/Utils';
-
+import { RuleProcessor, Rule, FileMetadata } from 'utils/RuleProcessor'
 export default class AutoNoteMover extends Plugin {
 	settings: AutoNoteMoverSettings;
 
@@ -9,6 +9,8 @@ export default class AutoNoteMover extends Plugin {
 		await this.loadSettings();
 		const folderTagPattern = this.settings.folder_tag_pattern;
 		const excludedFolder = this.settings.excluded_folder;
+
+		
 
 		const fileCheck = (file: TAbstractFile, oldPath?: string, caller?: string) => {
 			if (this.settings.trigger_auto_manual !== 'Automatic' && caller !== 'cmd') {
@@ -44,39 +46,29 @@ export default class AutoNoteMover extends Plugin {
 				return;
 			}
 
+			// transform pattern settings to Rules
+			const rules: Rule[] = folderTagPattern.map( ftp => ({
+				tagMatch: ftp.tag,
+				titleMatchRegex: new RegExp(ftp.pattern),
+				pathSpec: ftp.folder
+			}));
+			
+			const rp = new RuleProcessor(rules);
+
 			const fileName = file.basename;
 			const fileFullName = file.basename + '.' + file.extension;
-			const settingsLength = folderTagPattern.length;
-			const cacheTag = getAllTags(fileCache);
+			
+			const fileMetadata: FileMetadata = {
+				tags: getAllTags(fileCache),
+				title: fileName,
+				frontmatter: fileCache.frontmatter ?? { }
+			}
 
-			// checker
-			for (let i = 0; i < settingsLength; i++) {
-				const settingFolder = folderTagPattern[i].folder;
-				const settingTag = folderTagPattern[i].tag;
-				const settingPattern = folderTagPattern[i].pattern;
-				// Tag check
-				if (!settingPattern) {
-					if (!this.settings.use_regex_to_check_for_tags) {
-						if (cacheTag.find((e) => e === settingTag)) {
-							fileMove(this.app, settingFolder, fileFullName, file);
-							break;
-						}
-					} else if (this.settings.use_regex_to_check_for_tags) {
-						const regex = new RegExp(settingTag);
-						if (cacheTag.find((e) => regex.test(e))) {
-							fileMove(this.app, settingFolder, fileFullName, file);
-							break;
-						}
-					}
-					// Title check
-				} else if (!settingTag) {
-					const regex = new RegExp(settingPattern);
-					const isMatch = regex.test(fileName);
-					if (isMatch) {
-						fileMove(this.app, settingFolder, fileFullName, file);
-						break;
-					}
-				}
+			console.log('testing', fileName);
+			const movePath = rp.processFileMetadata(fileMetadata);
+			if (movePath) {
+				console.log('movePath', movePath);
+				fileMove(this.app, movePath, fileFullName, file);
 			}
 		};
 
@@ -94,14 +86,14 @@ export default class AutoNoteMover extends Plugin {
 		}
 
 		this.app.workspace.onLayoutReady(() => {
-			this.registerEvent(this.app.vault.on('create', (file) => fileCheck(file)));
+			this.registerEvent(this.app.vault.on('create', (file) => { console.log('new note'); fileCheck(file); }));
 			this.registerEvent(this.app.metadataCache.on('changed', (file) => fileCheck(file)));
 			this.registerEvent(this.app.vault.on('rename', (file, oldPath) => fileCheck(file, oldPath)));
 		});
 
 		const moveNoteCommand = (view: MarkdownView) => {
 			if (isFmDisable(this.app.metadataCache.getFileCache(view.file))) {
-				new Notice('Auto Note Mover is disabled in the frontmatter.');
+				new Notice('Auto Note Organizer is disabled in the frontmatter.');
 				return;
 			}
 			fileCheck(view.file, undefined, 'cmd');
@@ -128,11 +120,11 @@ export default class AutoNoteMover extends Plugin {
 				if (this.settings.trigger_auto_manual === 'Automatic') {
 					this.settings.trigger_auto_manual = 'Manual';
 					this.saveData(this.settings);
-					new Notice('[Auto Note Mover]\nTrigger is Manual.');
+					new Notice('[Auto Note Organizer]\nTrigger is Manual.');
 				} else if (this.settings.trigger_auto_manual === 'Manual') {
 					this.settings.trigger_auto_manual = 'Automatic';
 					this.saveData(this.settings);
-					new Notice('[Auto Note Mover]\nTrigger is Automatic.');
+					new Notice('[Auto Note Organizer]\nTrigger is Automatic.');
 				}
 				setIndicator();
 			},
