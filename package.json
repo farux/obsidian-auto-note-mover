@@ -1,6 +1,6 @@
 {
 	"name": "auto-note-organizer",
-	"version": "0.1",
+	"version": "0.2.0",
 	"description": "Auto Note Organizer will automatically move the active notes to their respective folders according to the rules.",
 	"main": "main.js",
 	"scripts": {
