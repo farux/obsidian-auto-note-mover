@@ -1,3 +1,27 @@
+# Auto Note Organizer
+
+A plugin for ObsidianMD to automatically organize your notes within a vault. This is a fork of the `obsidian-auto-note-mover` project by [farux](https://github.com/farux/obsidian-auto-note-mover). A big thank you to farux for the inspiration and groundwork done on the original project. The reason for this fork is to add some features that were missing in the original project due to the author's availability.
+
+## Project Scope
+
+- Provides a way to automatically organize notes within a vault by moving the notes based on rules setup by the vault user.
+- Allows for rules based on note tags and titles.
+- Each rule includes a path spec which can be parameterized with frontmatter property values. For example, `/projects/<project>/<category>` where `project` and `category` are taken from the note's frontmatter. This is the first enhancement added since forking.
+- Aims to continuously update and add new features.
+
+## Roadmap
+
+- [ ] Improved rules engine for readability and extensibility.
+- [ ] Improve settings panel
+- [ ] Add ability to gently enforce/encourage frontmatter. This may just be a 'best practice' document rather than feature.
+- [ ] Add move all notes command. (Inspired by [jeffbeaulieu's PR](https://github.com/farux/obsidian-auto-note-mover/pull/62))
+- [ ] More complex test conditions such as multiple tags. (Inspired by [karl82's PR](https://github.com/farux/obsidian-auto-note-mover/pull/52))
+- [ ] Review [open issues](https://github.com/farux/obsidian-auto-note-mover/issues) in the original project and open issues here for consideration.
+
+We welcome any contributions, suggestions, and feedback!
+
+
+---
 # Auto Note Mover
 
 Auto Note Mover will automatically move the active notes to their respective folders according to the rules.
