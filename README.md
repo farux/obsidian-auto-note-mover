@@ -21,6 +21,8 @@ A plugin for ObsidianMD to automatically organize your notes within a vault. Thi
 We welcome any contributions, suggestions, and feedback!
 
 
+
+farux's README below
 ---
 # Auto Note Mover
 
