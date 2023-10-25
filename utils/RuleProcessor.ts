@@ -13,7 +13,7 @@ export interface FileMetadata {
 export class RuleProcessor {
   constructor(private rules: Rule[]) {}
 
-  processFileMetadata(fileMetadata: FileMetadata): string | false {
+  getDestinationPath(fileMetadata: FileMetadata): string | false {
     for (const rule of this.rules) {
       if (this.ruleMatches(rule, fileMetadata)) {
         const path = this.processPathSpec(rule.pathSpec, fileMetadata.frontmatter);

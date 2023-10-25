@@ -64,8 +64,7 @@ export default class AutoNoteMover extends Plugin {
 				frontmatter: fileCache.frontmatter ?? { }
 			}
 
-			console.log('testing', fileName);
-			const movePath = rp.processFileMetadata(fileMetadata);
+			const movePath = rp.getDestinationPath(fileMetadata);
 			if (movePath) {
 				console.log('movePath', movePath);
 				fileMove(this.app, movePath, fileFullName, file);
